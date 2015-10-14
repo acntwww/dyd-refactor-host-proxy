@@ -15,6 +15,10 @@ from OpenSSL.crypto import (X509Extension, X509, dump_privatekey, dump_certifica
                             PKey, TYPE_RSA, X509Req)
 from OpenSSL.SSL import FILETYPE_PEM
 
+from interceptor import *
+from refactor import * 
+
+
 __author__ = 'Nadeem Douba'
 __copyright__ = 'Copyright 2012, PyMiProxy Project'
 __credits__ = ['Nadeem Douba']
@@ -248,32 +252,34 @@ class ProxyHandler(BaseHTTPRequestHandler):
             return self.do_COMMAND
 
 
-class InterceptorPlugin(object):
+# class InterceptorPlugin(object):
 
-    def __init__(self, server, msg):
-        self.server = server
-        self.message = msg
-
-
-class RequestInterceptorPlugin(InterceptorPlugin):
-
-    def do_request(self, data):
-        return data
+#     def __init__(self, server, msg):
+#         self.server = server
+#         self.message = msg
 
 
-class ResponseInterceptorPlugin(InterceptorPlugin):
+# class RequestInterceptorPlugin(InterceptorPlugin):
 
-    def do_response(self, data):
-        return data
+#     def do_request(self, data):
+#         #print 'do_request: ', data
+#         return data
 
 
-class InvalidInterceptorPluginException(Exception):
-    pass
+# class ResponseInterceptorPlugin(InterceptorPlugin):
+
+#     def do_response(self, data):
+#         #print 'do_response: ', data
+#         return data
+
+
+# class InvalidInterceptorPluginException(Exception):
+#     pass
 
 
 class MitmProxy(HTTPServer):
 
-    def __init__(self, server_address=('', 8080), RequestHandlerClass=ProxyHandler, bind_and_activate=True, ca_file='ca.pem'):
+    def __init__(self, server_address=('', 18080), RequestHandlerClass=ProxyHandler, bind_and_activate=True, ca_file='ca.pem'):
         HTTPServer.__init__(self, server_address, RequestHandlerClass, bind_and_activate)
         self.ca = CertificateAuthority(ca_file)
         self._res_plugins = []
@@ -295,23 +301,25 @@ class AsyncMitmProxy(ThreadingMixIn, MitmProxy):
 class MitmProxyHandler(ProxyHandler):
 
     def mitm_request(self, data):
-        print '>> %s' % repr(data[:100])
+        #print '>> headers-> %s' % repr(data.headers)
+        #print '>> type: %s'%s (type(data))
         return data
 
     def mitm_response(self, data):
-        print '<< %s' % repr(data[:100])
+        #print '<< %s' % repr(data[:100])
         return data
 
 
-class DebugInterceptor(RequestInterceptorPlugin, ResponseInterceptorPlugin):
 
-        def do_request(self, data):
-            print '>> %s' % repr(data[:100])
-            return data
+# class DebugInterceptor(RequestInterceptorPlugin, ResponseInterceptorPlugin):
 
-        def do_response(self, data):
-            print '<< %s' % repr(data[:100])
-            return data
+#         def do_request(self, data):
+#             print '>> %s' % repr(type(data))
+#             return data
+
+#         def do_response(self, data):
+#             #print '<< %s' % repr(data[:100])
+#             return data
 
 
 if __name__ == '__main__':
@@ -321,6 +329,7 @@ if __name__ == '__main__':
     else:
         proxy = AsyncMitmProxy(ca_file=argv[1])
     proxy.register_interceptor(DebugInterceptor)
+    proxy.register_interceptor(HostInterceptor)
     try:
         proxy.serve_forever()
     except KeyboardInterrupt:
