@@ -27,12 +27,11 @@ class HostInterceptor(RequestInterceptorPlugin, ResponseInterceptorPlugin):
 	def do_request(self, data):
 		p = HttpParser()
 		
-		size = len(data)
-		p.execute(data, size)
-		headers = p.get_headers()
-		host = self.msg.hostname + ":" +str(self.msg.port)#p.get_headers()['Host']
+		host = self.msg.hostname + ":" +str(self.msg.port)
 		print '>>HttpParser: ', host
 		if self.is_dyd_host(host):
+			size = len(data)
+			p.execute(data, size)
 			path = p.get_path()
 			body = p.recv_body()
 			query = parse_qs(body)
